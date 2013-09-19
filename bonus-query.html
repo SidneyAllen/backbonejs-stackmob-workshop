@@ -1,0 +1,416 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head> 
+<title>Query</title>
+  
+  <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" />
+  
+  <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <script src="http://static.stackmob.com/js/json2-min.js"></script>
+  <script src="http://static.stackmob.com/js/underscore-1.4.4-min.js"></script>
+  <script src="http://static.stackmob.com/js/backbone-1.0.0-min.js"></script>
+  <script src="http://static.stackmob.com/js/stackmob-js-0.9.2-min.js"></script>
+  <script src="stackmob-init.js"></script>
+ 
+  <script>
+
+  var app = (function($){
+
+    var Wine = StackMob.Model.extend({
+      schemaName : "wine"
+    });
+
+    var Wines = StackMob.Collection.extend({
+        model: Wine
+    });
+
+    var HomeView = Backbone.View.extend({
+      events: {
+         "click #filterBtn": "filter"
+      },
+
+      initialize: function() {
+        this.collection = this.options.collection;
+        this.template = _.template($('#filterTemplate').html());
+      },
+
+      render: function() {
+        this.$el.append(this.template());
+        this.listView = new ListView({collection : this.collection});
+        this.$el.append(this.listView.render().el);
+
+        return this;
+      },
+
+      filter: function(e) {
+        e.preventDefault();
+
+        var type = $("#filterForm select.type").val();
+        var size = $("#filterForm select.size").val();
+        
+        var q = new StackMob.Collection.Query();
+
+        if (type !== "") {
+          q.equals('type', type); 
+        }
+        
+        if (size !== "") {
+          q.equals('size',size); 
+        }
+
+        this.collection.query(q ,{
+          success: function(collection){
+            console.log(collection.toJSON());
+          }
+        });  
+      }
+
+    });
+
+    var ListView = Backbone.View.extend({
+      tagName: "ul",
+      className : "nav nav-list",
+
+      initialize: function() {
+        this.collection = this.options.collection;
+        this.template = _.template($('#listTemplate').html());
+        this.collection.bind('all', _.bind(this.render,this));
+      },
+
+      render: function() {
+        this.$el.empty();
+        
+        this.collection.each(function(model) {
+          this.$el.append(this.template(model.toJSON()));
+        },this);
+                 
+        return this;
+      }
+    });
+
+    var AddView = Backbone.View.extend({
+     
+      events: {
+         "click #saveBtn": "save"
+      },
+
+      initialize: function() {
+        this.template = _.template($('#addTemplate').html());
+        this.collection = this.options.collection;
+        this.router = this.options.router;
+      },
+
+      render: function() {
+        this.$el.empty();
+        this.$el.append(this.template({winery : ""}));
+
+        return this;
+      },
+
+      save: function(e) {
+        var self = this;
+        e.preventDefault();
+
+        var wine = new Wine({
+                            winery : $('#winery').val(),
+                            type : $('#type').val(),
+                            size : $('#size').val() 
+                            });
+
+        wine.create({
+          success: function(model){
+            self.collection.add(model);
+            self.router.navigate('#',{trigger: true, replace: false});
+          }
+        });  
+
+        $('#winery').val('');   
+        
+        return this;
+      }
+    });
+
+    var UpdateView = Backbone.View.extend({
+      
+      events: {
+         "click #saveBtn": "save"
+      },
+
+      initialize: function() {
+        this.template = _.template($('#addTemplate').html());
+        this.model = this.options.model;
+        this.router = this.options.router;
+      },
+
+      render: function() {
+        this.$el.empty();
+        this.$el.append(this.template(this.model.toJSON()));
+
+        return this;
+      },
+
+      save: function(e) {
+        var self = this;
+
+        e.preventDefault();
+                
+        this.model.save({winery:$('#winery').val() },{
+          success: function(model){  
+            self.router.navigate('#',{trigger: true, replace: false});
+          }
+        });    
+      }
+    });
+
+    var SignUpView = Backbone.View.extend({
+    events: {
+      "click #signUpBtn": "signup",
+      "click #loginBtn": "login",  
+      "click #statusBtn": "status", 
+      "click #logoutBtn": "logout",     
+    },
+
+    initialize: function() {
+      this.template = _.template($('#signUpTemplate').html());
+      this.router = this.options.router;
+    },
+
+    render:function (eventName) {
+      // Render the page template
+      $(this.el).html(this.template());
+        
+      return this;
+    },
+
+    signup:function (e) {
+      e.preventDefault();
+
+      var username = $("#signUpForm input.username").val();
+      var pw = $("#signUpForm input.password").val();
+      
+      var user = new StackMob.User({ username: username, 
+                                    password:  pw });
+
+      user.create({
+        success: function(data) {
+          console.log(data.toJSON());
+        },
+        error: function(error) {
+          console.log(error);
+        }
+      });
+
+      return this;
+    },
+
+    login:function (e) {
+      e.preventDefault();
+      
+      var username = $("#signUpForm input.username").val();
+      var pw = $("#signUpForm input.password").val();
+      
+      var user = new StackMob.User({ username: username, 
+                                    password:  pw });
+
+      user.login(true,{
+        success: function(data) {
+          console.log(data);
+        },
+        error: function(error) {
+          console.log(error);
+        }
+      });
+
+      return this;
+    },
+
+    status:function (e) {
+      e.preventDefault();
+      
+      console.log(StackMob.isLoggedIn());
+
+      return this;
+    },
+
+    logout:function (e) {
+      e.preventDefault();
+      
+      var user = new StackMob.User(); 
+      user.logout({
+        success: function() {
+          console.log("logout success");
+        },
+        error: function(error) {
+          console.log(error);
+        }
+      });
+
+      return this;
+    }
+  });
+
+    var AppRouter = Backbone.Router.extend({
+      routes:{
+        "":"home",
+        "add":"add",
+        "update/:id":"update",
+        "signup":"signup"
+      },
+
+      initialize:function(options) {
+        this.collection = options.collection;
+      },
+
+      home:function () {
+        this.changePage( new HomeView({collection : this.collection}) );
+      },
+      
+      add:function () {
+        this.changePage( new AddView({collection : this.collection, router : this}) );
+      },
+
+      update:function (e) {
+        this.model = this.collection.get(e);
+        this.changePage(new UpdateView({ model : this.model, router : this}) );
+      },
+    
+      signup:function () {
+        this.changePage( new SignUpView({collection : this.collection, router : this}) );
+      },
+
+      changePage:function (page) {
+        $('.content').empty();
+        $('.content').append($(page.render().el));
+      }
+
+    });
+
+    var initialize = function() {
+      var wines = new Wines();
+      wines.fetch({async:true});
+
+      wineApp = new AppRouter({collection : wines});
+      Backbone.history.start();
+    }
+
+    return { initialize : initialize};
+
+  }(jQuery));
+   
+  $(document).ready(function() {
+    app.initialize();
+  });
+
+  </script>
+
+  <script type="text/template" id="navTemplate">    
+    <div class="navbar">
+      <div class="navbar-inner">
+        <a class="brand" href="#">Wine App</a>
+        <ul class="nav">
+          <li><a href="#">Home</a></li>
+          <li class="divider-vertical"></li>
+          <li><a href="#add">Add New</a></li>
+          <li class="divider-vertical"></li>
+          <li><a href="#signup">SignUp</a></li>
+        </ul>
+        </div>
+    </div>
+  </script>
+ 
+
+  <script type="text/template" id="listTemplate">    
+      <li>
+          <a href="#update/<%= wine_id %>"><%= winery %></a>
+      </li>
+  </script>
+
+  <script type="text/template" id="addTemplate">
+    <form>
+      <fieldset>
+        <legend>Wine Detail</legend>
+        <label for="winery">Winery Name:</label>
+        <input type="text" id="winery" name="winery" value="<%= winery %>">
+
+        <label for="size">Size:</label>
+        <select id="size">
+          <option value="375">375 ml</option>
+          <option selected="true" value="750">750 ml</option>
+          <option value="1500">1.5 l</option>
+        </select>
+
+        <label for="type">Varietal:</label>
+        <select id="type">
+          <option value="chardonnay">Chardonnay</option>
+          <option selected="true" value="cabernet">Cabernet Savignon</option>
+          <option value="pinotnior">Pinot Nior</option>
+          <option value="zinfandel">Zinfandel</option>
+        </select>
+
+        <div>
+             <a href="#" id="cancelBtn" class="btn">close</a>
+             <a href="#" id="saveBtn" class="btn">save</a>
+        </div>
+        
+      </fieldset>
+    </form>
+  </script>
+
+  <script type="text/template" id="signUpTemplate">
+      <form name="signUpForm" id="signUpForm">
+        <label for="username">username:</label>
+        <input type="text" name="username" id="username" placeholder="username" value="" autocapitalize="off" autocorrect="off" class="username">
+        
+        <label for="password">password:</label>
+        <input type="password" placeholder="password" name="password" required="true"  class="password"/>
+        <div>
+          <button id="signUpBtn" class="btn">SignUp</button>
+          <button id="loginBtn" class="btn">Login</button>
+          <button id="statusBtn" class="btn">User Status</button>
+          <button id="logoutBtn" class="btn">Logout</button>
+        </div>
+      </form>
+  </script>
+
+  <script type="text/template" id="filterTemplate">
+    <form name="filterForm" id="filterForm" class="form-inline">
+        <select class="size">
+          <option value="">All Sizes</option>
+          <option value="375">375 ml</option>
+          <option value="750">750 ml</option>
+          <option value="1500">1.5 l</option>
+        </select>
+
+        <select class="type">
+          <option value="">All Varietals</option>
+          <option value="chardonnay">Chardonnay</option>
+          <option value="cabernet">Cabernet Savignon</option>
+          <option value="pinotnior">Pinot Nior</option>
+          <option value="zinfandel">Zinfandel</option>
+        </select>
+
+        <button id="filterBtn" class="btn">Filter</button>
+   </form>
+  </script>
+
+</head> 
+<body >
+<div class="container">
+  <div class="navbar">
+      <div class="navbar-inner">
+        <a class="brand" href="#">Wine App</a>
+        <ul class="nav">
+          <li><a href="#">Home</a></li>
+          <li class="divider-vertical"></li>
+          <li><a href="#add">Add New</a></li>
+          <li class="divider-vertical"></li>
+          <li><a href="#signup">SignUp/Login</a></li>
+        </ul>
+    </div>
+  </div>
+  <div class="content">
+
+  </div>
+</div>
+</body>
+</html>

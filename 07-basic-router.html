@@ -1,0 +1,120 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head> 
+<title>Basic Router</title>
+    
+  <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+
+  <script src="http://static.stackmob.com/js/json2-min.js"></script>
+  <script src="http://static.stackmob.com/js/underscore-1.4.4-min.js"></script>
+  <script src="http://static.stackmob.com/js/backbone-1.0.0-min.js"></script>
+
+  <script>
+
+  var app = (function($){
+
+    var Wine = Backbone.Model.extend({
+      schemaName : "wine"
+    });
+
+    var Wines = Backbone.Collection.extend({
+        model: Wine
+    });
+
+    var wines = new Wines();
+
+    var HomeView = Backbone.View.extend({
+ 
+      initialize: function() {
+          this.render();
+      },
+
+      render: function() {
+        this.$el.empty();
+        this.$el.append("<h1>Wine Cellar</h1>");
+        this.$el.append("<a href='#add'>Add View</a>");
+
+        this.listView = new ListView();
+        this.$el.append(this.listView.render().el);
+
+        return this;
+      }
+    });
+
+    var ListView = Backbone.View.extend({
+      tagName: 'ul',
+
+      initialize: function() {
+        this.template = _.template($('#listTemplate').html());
+        this.listenTo(wines, "all", this.render);
+        this.render();
+      },
+
+      render: function() {
+        var   self = this;
+        
+        this.$el.empty();
+                
+        wines.each(function(model) {
+          self.$el.append(self.template(model.toJSON()));
+        });
+                 
+        return this;
+      }
+    });
+
+    var AddView = Backbone.View.extend({
+
+      initialize: function() {
+        this.render();
+      },
+
+      render: function() {
+        this.$el.append("Add View Here!")
+                 
+        return this;
+      }
+    });
+
+    var AppRouter = Backbone.Router.extend({
+      routes:{
+        "":"home",
+        "add":"add"
+      },
+
+      home:function () {
+        var view = new HomeView();
+        $('body').empty();
+        $('body').append(view.el);
+      },
+      add:function () {
+        var view = new AddView();
+        $('body').empty();
+        $('body').append(view.el);
+      }
+    });
+
+    var initialize = function() {
+      wineApp = new AppRouter();
+      Backbone.history.start();
+    }
+
+    return { initialize : initialize};
+
+  }(jQuery));
+   
+  $(document).ready(function() {
+    app.initialize();
+  });
+
+  </script>
+
+  <script type="text/template" id="listTemplate">    
+      <li>
+          <%= winery %>
+      </li>
+  </script>
+
+</head> 
+<body></body>
+</html>

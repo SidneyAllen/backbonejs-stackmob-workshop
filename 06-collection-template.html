@@ -1,0 +1,79 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head> 
+<title>Collection Template</title>
+    
+  <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+
+  <script src="http://static.stackmob.com/js/json2-min.js"></script>
+  <script src="http://static.stackmob.com/js/underscore-1.4.4-min.js"></script>
+  <script src="http://static.stackmob.com/js/backbone-1.0.0-min.js"></script>
+
+  <script>
+
+  (function($){
+
+    var Wine = Backbone.Model.extend({
+      schemaName : "wine"
+    });
+
+    var Wines = Backbone.Collection.extend({
+        model: Wine
+    });
+
+    wines = new Wines();
+
+    HomeView = Backbone.View.extend({
+
+      initialize: function() {
+          this.render();
+      },
+
+      render: function() {
+        this.$el.empty();
+        this.$el.append("<h1>Wine Cellar</h1>");
+
+        this.listView = new ListView();
+        this.$el.append(this.listView.render().el);
+
+        return this;
+      }
+    });
+
+    ListView = Backbone.View.extend({
+      tagName: 'ul',
+
+      initialize: function() {
+        this.template = _.template($('#listTemplate').html());
+        
+        this.render();
+      },
+
+      render: function() {
+        var   self = this;
+        
+        this.$el.empty();
+        
+                 
+        return this;
+      }
+    });
+
+  }(jQuery));
+   
+  $(document).ready(function() {
+    var view = new HomeView();
+    $('body').append(view.el);
+  });
+
+  </script>
+
+  <script type="text/template" id="listTemplate">    
+      <li>
+          <%= winery %>
+      </li>
+  </script>
+
+</head> 
+<body></body>
+</html>

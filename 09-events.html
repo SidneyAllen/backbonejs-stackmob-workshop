@@ -1,0 +1,153 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head> 
+<title>View</title>
+    
+  <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+
+  <script src="http://static.stackmob.com/js/json2-min.js"></script>
+  <script src="http://static.stackmob.com/js/underscore-1.4.4-min.js"></script>
+  <script src="http://static.stackmob.com/js/backbone-1.0.0-min.js"></script>
+
+  <script>
+
+  var app = (function($){
+
+    var Wine = Backbone.Model.extend({});
+
+    var Wines = Backbone.Collection.extend({
+        model: Wine
+    });
+
+    var HomeView = Backbone.View.extend({
+
+      initialize: function() {
+          this.collection = this.options.collection;
+          this.render();
+      },
+
+      render: function() {
+        this.$el.empty();
+        this.$el.append("<h1>Wine Cellar</h1>");
+        this.$el.append("<a href='#add'>Add Wine</a>");
+
+        this.listView = new ListView({collection : this.collection});
+        this.$el.append(this.listView.render().el);
+
+        return this;
+      }
+    });
+
+    var ListView = Backbone.View.extend({
+      tagName: 'ul',
+
+      initialize: function() {
+        this.collection = this.options.collection;
+        this.template = _.template($('#listTemplate').html());
+        this.listenTo(this.collection, "all", this.render);
+        this.render();
+      },
+
+      render: function() {
+        var   self = this;
+        
+        this.$el.empty();
+                
+        this.collection.each(function(model) {
+          self.$el.append(self.template(model.toJSON()));
+        });
+                 
+        return this;
+      }
+    });
+
+    var AddView = Backbone.View.extend({
+
+      initialize: function() {
+        this.template = _.template($('#addTemplate').html());
+        this.collection = this.options.collection;
+
+        this.render();
+      },
+
+      render: function() {
+        this.$el.empty();
+        this.$el.append(this.template());
+
+        return this;
+      },
+
+      save: function(e) {
+        e.preventDefault();
+
+        var wine = new Wine({winery:$('#winery').val() });
+        
+        
+        return this;
+      }
+    });
+
+    var AppRouter = Backbone.Router.extend({
+      routes:{
+        "":"home",
+        "add":"add"
+      },
+
+      initialize:function(options) {
+        this.collection = options.collection;
+      },
+
+      home:function () {
+        var view = new HomeView({collection : this.collection});
+        $('body').empty();
+        $('body').append(view.el);
+      },
+      add:function () {
+        var view = new AddView({collection : this.collection, router :this});
+        $('body').empty();
+        $('body').append(view.el);
+      }
+    });
+
+    var initialize = function() {
+      var wines = new Wines();
+
+      wineApp = new AppRouter({collection : wines});
+      Backbone.history.start();
+    }
+
+    return { initialize : initialize};
+
+  }(jQuery));
+   
+  $(document).ready(function() {
+    app.initialize();
+  });
+
+  </script>
+
+  <script type="text/template" id="listTemplate">    
+      <li>
+          <%= winery %>
+      </li>
+  </script>
+
+  <script type="text/template" id="addTemplate">
+    <form>
+      <fieldset>
+        <legend>Wine Detail</legend>
+        <label for="winery">Winery Name:</label>
+        <input type="text" id="winery" name="winery" value="">
+
+        <div>
+             <a href="#" id="cancelBtn" class="btn">close</a>
+             <a href="#" id="saveBtn" class="btn">save</a>
+        </div>
+        
+      </fieldset>
+    </form>
+  </script>
+
+</head> 
+<body></body>
+</html>
