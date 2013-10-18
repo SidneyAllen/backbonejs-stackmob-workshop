@@ -84,8 +84,7 @@
       },
 
       save: function(e) {
-        var collection = this.collection,
-            router = this.router;
+        var self = this;
         e.preventDefault();
 
 
@@ -93,8 +92,8 @@
 
         wine.create({
           success: function(model){
-            collection.add(model);
-            router.navigate('#',{trigger: true, replace: false});
+            self.collection.add(model);
+            self.router.navigate('#',{trigger: true, replace: false});
           }
         });  
 
@@ -124,14 +123,13 @@
       },
 
       save: function(e) {
-        var collection = this.collection,
-            router = this.router;
+        var self = this;
 
         e.preventDefault();
                 
-        this.model.save({winery:$('#winery').val() },{
+        self.model.save({winery:$('#winery').val() },{
           success: function(model){  
-            router.navigate('#',{trigger: true, replace: false});
+            self.router.navigate('#',{trigger: true, replace: false});
           }
         });    
       }
@@ -188,7 +186,7 @@
 
   <script type="text/template" id="listTemplate">    
       <li>
-          <a href="#update/<%= wine_id %>"><%= winery %></a>
+          <a href="#"><%= winery %></a>
       </li>
   </script>
 
